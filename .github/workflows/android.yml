@@ -7,7 +7,7 @@ on:
     branches: [ "master" ]
 
 jobs:
-  build:
+  test_job:
 
     runs-on: ubuntu-latest
 
@@ -27,3 +27,34 @@ jobs:
 
     - name: Run unit tests
       run: ./gradlew test
+
+  android_test_job:
+    name: Android Test
+    runs-on: macos-latest
+    continue-on-error: true
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Restore Cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+      - name: Run Android Tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          script: ./gradlew connectedDebugAndroidTest
+
+      - name: Upload Android Test Reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: android-test-reports
+          path: '**/build/reports/androidTests/'
